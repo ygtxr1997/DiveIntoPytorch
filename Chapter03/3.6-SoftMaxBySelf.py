@@ -29,7 +29,7 @@ def softmax(X):
     partition = X_exp.sum(dim=1, keepdim=True)
     return X_exp / partition # broadcast
 
-# 模型
+# 单层softmax模型
 def net(X):
     # 使用view将原始输入图像展开成向量
     return softmax(torch.mm(X.view((-1, dim_inputs)), W) + b)
@@ -38,5 +38,16 @@ def net(X):
 def cross_entropy(y_hat, y):
     return - torch.log(y_hat.gather(1, y.view(-1, 1))) # 对y_hat的每个预测值, 取y对应的那个位置对应的值
 
+# 训练
 num_epochs, lr = 5, 0.1
+utils.train_ch3(net, train_iter, test_iter, cross_entropy, num_epochs,
+    batch_size, [W, b], lr)
 
+# 预测
+X, y = iter(test_iter).next()
+
+true_labels = utils.get_fashion_mnist_labels(y.numpy())
+pred_labels = utils.get_fashion_mnist_labels(net(X).argmax(dim=1).numpy())
+titles = [true + '\n' + pred for true, pred in zip(true_labels, pred_labels)]
+
+utils.show_fashion_mnist(X[0:9], titles[0:9])

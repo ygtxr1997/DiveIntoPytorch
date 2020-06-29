@@ -3,6 +3,11 @@ from IPython import display
 from matplotlib import pyplot as plt
 import numpy as np
 import random
+import sys
+import torchvision
+import torchvision.transforms as transforms
+import torch.optim as optim
+import torch.nn as nn
 
 # 矢量图显示
 def use_svg_display():
@@ -54,6 +59,11 @@ def show_fashion_mnist(images, labels):
 
 # 从mnist加载数据
 def load_data_fashion_mnist(batch_size):
+    # 加载数据集
+    mnist_train = torchvision.datasets.FashionMNIST(root='D:/Datasets/FashionMNIST',
+        train=True, download=True, transform=transforms.ToTensor())
+    mnist_test = torchvision.datasets.FashionMNIST(root='D:/Datasets/FashionMNIST',
+        train=False, download=True, transform=transforms.ToTensor())
     if sys.platform.startswith('win'):
         num_workers = 0
     else:
@@ -69,30 +79,42 @@ def load_data_fashion_mnist(batch_size):
 def evaluate_accuracy(data_iter, net):
     acc_sum, n = 0.0, 0
     for X, y in data_iter:
-        acc_sum += (net(X).argmax(dim=1) == y).float().mean().item()
+        acc_sum += (net(X).argmax(dim=1) == y).sum().item() # 总正确数
         n += y.shape[0] # 一批数据
     return acc_sum / n
 
 # 第三章的train
 def train_ch3(net, train_iter, test_iter, loss, num_epochs, batch_size,
-    params=None, optimizer=None):
+    params=None, lr=None, optimizer=None):
     for epoch in range(num_epochs):
         train_l_sum, train_acc_sum, n = 0.0, 0.0, 0
         for X, y in train_iter:
             y_hat = net(X)
             l = loss(y_hat, y).sum()
 
-        # 清零
-        if optimizer is not None:
-            optimizer.zero_grad()
-        elif params is not None and params[0].grad is not None:
-            for param in params:
-                param.grad.data.zero_()
-        
-        l.backward()
-        if optimizer is None:
-            sgd(params, lr, batch_size) # 随机梯度下降
-        else:
-            optimizer.step() # 用pytorch自带函数时会用到
-        
-        train_l_sum += 
+            # 清零
+            if optimizer is not None:
+                optimizer.zero_grad()
+            elif params is not None and params[0].grad is not None:
+                for param in params:
+                    param.grad.data.zero_()
+            
+            l.backward()
+            if optimizer is None:
+                sgd(params, lr, batch_size) # 随机梯度下降
+            else:
+                optimizer.step() # 用pytorch自带函数时会用到
+            
+            train_l_sum += l.item()
+            train_acc_sum += (y_hat.argmax(dim=1) == y).sum().item()
+            n += y.shape[0]
+        test_acc = evaluate_accuracy(test_iter, net)
+        print('epoch %d, loss %.4f, train acc %.3f, test acc %.3f'
+            % (epoch + 1, train_l_sum / n, train_acc_sum / n, test_acc))
+
+# 平铺多维向量
+class FlattenLayer(nn.Module):
+    def __init__(self):
+        super(FlattenLayer, self).__init__()
+    def forward(self, x):
+        return x.view(x.shape[0], -1) # flatten
