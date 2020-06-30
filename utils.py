@@ -76,10 +76,19 @@ def load_data_fashion_mnist(batch_size):
 
 # 计算分类准确率
 # 分类准确率即正确预测数量与总预测数量之比
+# 使用dropout时, 对模型评估不应该使用dropout
 def evaluate_accuracy(data_iter, net):
     acc_sum, n = 0.0, 0
     for X, y in data_iter:
-        acc_sum += (net(X).argmax(dim=1) == y).sum().item() # 总正确数
+        if isinstance(net, torch.nn.Module): # pytorch模型
+            net.eval() # 评估模式, 会关闭dropout
+            acc_sum += (net(X).argmax(dim=1) == y).float().sum().item()
+            net.train() # 改回训练模式
+        else: # 自定义模型
+            if ('is_training' in net.__code__.co_varnames): # 如果有is_training这个参数
+                acc_sum += (net(X, is_training=False).argmax(dim=1) == y).float().sum().item() # 总正确数
+            else:
+                acc_sum += (net(X).argmax(dim=1) == y).float().sum().item()
         n += y.shape[0] # 一批数据
     return acc_sum / n
 
@@ -118,3 +127,16 @@ class FlattenLayer(nn.Module):
         super(FlattenLayer, self).__init__()
     def forward(self, x):
         return x.view(x.shape[0], -1) # flatten
+
+# y轴使用对数尺度, 画图函数
+def semilogy(x_vals, y_vals, x_label, y_label, x2_vals=None, y2_vals=None,
+    legend=None, figsize=(10, 8)):
+    set_figsize(figsize)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.semilogy(x_vals, y_vals)
+    if x2_vals and y2_vals:
+        plt.semilogy(x2_vals, y2_vals, linestyle=':')
+        plt.legend(legend)
+    plt.show()
+
