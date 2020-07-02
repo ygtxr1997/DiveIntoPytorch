@@ -8,6 +8,7 @@ import torchvision
 import torchvision.transforms as transforms
 import torch.optim as optim
 import torch.nn as nn
+import torch.nn.functional as F
 import time
 
 # 矢量图显示
@@ -59,20 +60,31 @@ def show_fashion_mnist(images, labels):
     plt.show()
 
 # 从mnist加载数据
-def load_data_fashion_mnist(batch_size):
+# 新增扩大图像尺寸
+def load_data_fashion_mnist(batch_size, resize=None):
+    # 变换列表
+    trans = []
+    if resize:
+        trans.append(torchvision.transforms.Resize(size=resize))
+    trans.append(torchvision.transforms.ToTensor())
+    
+    transform = torchvision.transforms.Compose(trans)
+
     # 加载数据集
     if torch.cuda.is_available():
         PATH = '/GPUFS/sysu_zhenghch_1/yuange/pytorch/dataset/FashionMNIST'
     else:
         PATH = 'D:/Datasets/FashionMNIST'
     mnist_train = torchvision.datasets.FashionMNIST(root=PATH,
-        train=True, download=True, transform=transforms.ToTensor())
+        train=True, download=True, transform=transform)
     mnist_test = torchvision.datasets.FashionMNIST(root=PATH,
-        train=False, download=True, transform=transforms.ToTensor())
+        train=False, download=True, transform=transform)
+
     if sys.platform.startswith('win'):
         num_workers = 0
     else:
         num_workers = 4
+
     train_iter = torch.utils.data.DataLoader(mnist_train,
         batch_size=batch_size, shuffle=True, num_workers=num_workers) # 指定多进程加速读取, 性能瓶颈
     test_iter = torch.utils.data.DataLoader(mnist_test,
@@ -192,3 +204,11 @@ def train_ch5(net, train_iter, test_iter, batch_size, optimizer,
         test_acc = evaluate_accuracy(test_iter, net)
         print('epoch %d, loss %.4f, train acc %.3f, test acc %.3f, time %.1f sec'
             % (epoch + 1, train_l_sum / batch_count, train_acc_sum / n, test_acc, time.time() - start_time))
+
+# 全局平均池化层
+# 用于NIN, 可以显著减小模型参数尺寸, 缓解过拟合, 但有时会造成获训练时间增加
+class GlobalAvgPool2d(nn.Module):
+    def __init__(self):
+        super(GlobalAvgPool2d, self).__init__()
+    def forward(self, x):
+        return F.avg_pool2d(x, kernel_size=x.size()[2:]) # 核尺寸相当于输入宽高
