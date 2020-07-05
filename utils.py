@@ -212,3 +212,22 @@ class GlobalAvgPool2d(nn.Module):
         super(GlobalAvgPool2d, self).__init__()
     def forward(self, x):
         return F.avg_pool2d(x, kernel_size=x.size()[2:]) # 核尺寸相当于输入宽高
+
+# ResNet残差块
+class Residual(nn.Module):
+    def __init__(self, in_channels, out_channels, use_1x1=False, stride=1):
+        super(Residual, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, stride=stride)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
+        if use_1x1:
+            self.conv3 = nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride)
+        else:
+            self.conv3 = None
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+    def forward(self, X):
+        Y = F.relu(self.bn1(self.conv1(X)))
+        Y = self.bn2(self.conv2(Y))
+        if self.conv3:
+            X = self.conv3(X)
+        return F.relu(Y + X)
