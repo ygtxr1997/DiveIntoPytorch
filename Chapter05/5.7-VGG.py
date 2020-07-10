@@ -23,6 +23,7 @@ def vgg_block(num_convs, in_channels, out_channels):
             blk.append(nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1))
         else:
             blk.append(nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1))
+        blk.append(nn.ReLU())
     blk.append(nn.MaxPool2d(kernel_size=2, stride=2)) # 这里使得宽高减半
     return nn.Sequential(*blk)
 

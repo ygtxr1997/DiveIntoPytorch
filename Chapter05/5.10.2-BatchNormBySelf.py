@@ -35,11 +35,11 @@ def batch_norm(is_training, X, gamma, beta, moving_mean, moving_var,
     return Y, moving_mean, moving_var
 
 class BatchNorm(nn.Module):
+    """
+    dim_features:对全连接层为输出个数, 对卷积层为输出通道数\n
+    num_dim:总维度数
+    """
     def __init__(self, dim_features, num_dims):
-        """
-        dim_features:对全连接层为输出个数, 对卷积层为输出通道数\n
-        num_dim:总维度数
-        """
         super(BatchNorm, self).__init__()
         if num_dims == 2: # 全连接层
             shape = (1, dim_features)

@@ -24,6 +24,12 @@ ResNet模型:
 通过跨层的数据通道, 能够训练出有效的深度神经网络.
 """
 def resnet_block(in_channels, out_channels, num_residuals, first_block=False):
+    """
+    in_channels: 输入\n
+    out_channels: 输出\n
+    num_residuals: 个数\n
+    first_block: 是否为第一个
+    """
     if first_block:
         assert in_channels == out_channels
     blk = []

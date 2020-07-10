@@ -215,6 +215,12 @@ class GlobalAvgPool2d(nn.Module):
 
 # ResNet残差块
 class Residual(nn.Module):
+    """
+    in_channels: 输入通道
+    out_channels: 输出通道
+    use_1x1: 是否使用1*1
+    stride: 步长
+    """
     def __init__(self, in_channels, out_channels, use_1x1=False, stride=1):
         super(Residual, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, stride=stride)

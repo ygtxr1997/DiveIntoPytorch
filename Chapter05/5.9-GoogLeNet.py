@@ -39,7 +39,7 @@ class Inception(nn.Module):
         p4 = F.relu(self.p4_2(self.p4_1(x)))
         return torch.cat((p1, p2, p3, p4), dim=1) # 连接通道维度
 
-# GoogLeNeth和VGG类似, 在卷积部分使用5个block, 每个block之间使用strid=2的3*3最大池化层来减小宽高
+# GoogLeNet和VGG类似, 在卷积部分使用5个block, 每个block之间使用stride=2的3*3最大池化层来减小宽高
 b1 = nn.Sequential(nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3),
         nn.ReLU(),
         nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
